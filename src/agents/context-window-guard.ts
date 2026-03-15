@@ -3,7 +3,40 @@ import type { OpenClawConfig } from "../config/config.js";
 export const CONTEXT_WINDOW_HARD_MIN_TOKENS = 16_000;
 export const CONTEXT_WINDOW_WARN_BELOW_TOKENS = 32_000;
 
-export type ContextWindowSource = "model" | "modelsConfig" | "agentContextTokens" | "default";
+export type ContextWindowSource =
+  | "model"
+  | "modelsConfig"
+  | "knownOverride"
+  | "agentContextTokens"
+  | "default";
+
+/**
+ * Known context window corrections for models whose upstream catalog
+ * (pi-ai models.generated.js) has not yet been updated.
+ *
+ * Claude Opus 4.6 and Sonnet 4.6 support 1M context (GA since 2026-03-13).
+ * The pi-ai catalog still reports 200K for most providers.
+ * See: https://claude.com/blog/1m-context-ga
+ *
+ * Patterns are matched against the modelId (case-insensitive, substring).
+ * User modelsConfig overrides always take priority over these corrections.
+ */
+const KNOWN_CONTEXT_WINDOW_OVERRIDES: ReadonlyArray<{ pattern: string; tokens: number }> = [
+  { pattern: "opus-4-6", tokens: 1_000_000 },
+  { pattern: "opus-4.6", tokens: 1_000_000 },
+  { pattern: "sonnet-4-6", tokens: 1_000_000 },
+  { pattern: "sonnet-4.6", tokens: 1_000_000 },
+];
+
+function resolveKnownContextWindowOverride(modelId: string): number | null {
+  const lower = modelId.toLowerCase();
+  for (const entry of KNOWN_CONTEXT_WINDOW_OVERRIDES) {
+    if (lower.includes(entry.pattern)) {
+      return entry.tokens;
+    }
+  }
+  return null;
+}
 
 export type ContextWindowInfo = {
   tokens: number;
@@ -35,11 +68,14 @@ export function resolveContextWindowInfo(params: {
     return normalizePositiveInt(match?.contextWindow);
   })();
   const fromModel = normalizePositiveInt(params.modelContextWindow);
+  const fromKnownOverride = resolveKnownContextWindowOverride(params.modelId);
   const baseInfo = fromModelsConfig
     ? { tokens: fromModelsConfig, source: "modelsConfig" as const }
-    : fromModel
-      ? { tokens: fromModel, source: "model" as const }
-      : { tokens: Math.floor(params.defaultTokens), source: "default" as const };
+    : fromKnownOverride
+      ? { tokens: fromKnownOverride, source: "knownOverride" as const }
+      : fromModel
+        ? { tokens: fromModel, source: "model" as const }
+        : { tokens: Math.floor(params.defaultTokens), source: "default" as const };
 
   const capTokens = normalizePositiveInt(params.cfg?.agents?.defaults?.contextTokens);
   if (capTokens && capTokens < baseInfo.tokens) {
