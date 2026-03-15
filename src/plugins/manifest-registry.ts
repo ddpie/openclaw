@@ -302,10 +302,15 @@ export function loadPluginManifestRegistry(params: {
       // duplicates. Untracked duplicates must keep the existing bundled-first trust
       // and enable semantics.
       if (
-        PLUGIN_ORIGIN_RANK[candidate.origin] < PLUGIN_ORIGIN_RANK[existing.candidate.origin] &&
-        candidateMatchesTrackedInstall({
+        resolveDuplicatePrecedenceRank({
           pluginId: manifest.id,
           candidate,
+          config,
+          env,
+        }) <
+        resolveDuplicatePrecedenceRank({
+          pluginId: manifest.id,
+          candidate: existing.candidate,
           config,
           env,
         })
