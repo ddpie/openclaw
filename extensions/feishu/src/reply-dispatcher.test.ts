@@ -58,7 +58,7 @@ describe("createFeishuReplyDispatcher streaming behavior", () => {
     vi.clearAllMocks();
     streamingInstances.length = 0;
     sendMediaFeishuMock.mockResolvedValue(undefined);
-    sendStructuredCardFeishuMock.mockResolvedValue(undefined);
+    sendStructuredCardFeishuMock.mockResolvedValue({ messageId: "card_msg" });
 
     resolveFeishuAccountMock.mockReturnValue({
       accountId: "main",

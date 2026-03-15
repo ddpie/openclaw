@@ -14,6 +14,7 @@ import { setFeishuRuntime } from "./runtime.js";
 const {
   mockCreateFeishuReplyDispatcher,
   mockSendMessageFeishu,
+  mockSendStructuredCardFeishu,
   mockGetMessageFeishu,
   mockListFeishuThreadMessages,
   mockDownloadMessageResourceFeishu,
@@ -28,6 +29,9 @@ const {
     markDispatchIdle: vi.fn(),
   })),
   mockSendMessageFeishu: vi.fn().mockResolvedValue({ messageId: "pairing-msg", chatId: "oc-dm" }),
+  mockSendStructuredCardFeishu: vi
+    .fn()
+    .mockResolvedValue({ messageId: "pairing-card-msg", chatId: "oc-dm" }),
   mockGetMessageFeishu: vi.fn().mockResolvedValue(null),
   mockListFeishuThreadMessages: vi.fn().mockResolvedValue([]),
   mockDownloadMessageResourceFeishu: vi.fn().mockResolvedValue({
@@ -54,6 +58,7 @@ vi.mock("./reply-dispatcher.js", () => ({
 
 vi.mock("./send.js", () => ({
   sendMessageFeishu: mockSendMessageFeishu,
+  sendStructuredCardFeishu: mockSendStructuredCardFeishu,
   getMessageFeishu: mockGetMessageFeishu,
   listFeishuThreadMessages: mockListFeishuThreadMessages,
 }));
