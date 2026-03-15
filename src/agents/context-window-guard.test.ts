@@ -148,7 +148,7 @@ describe("context-window-guard", () => {
   });
 
   describe("knownOverride for Claude 4.6 models (1M context GA)", () => {
-    it("overrides claude-opus-4-6 to 1M even when catalog says 200K", () => {
+    it("overrides claude-opus-4-6 to 1M for anthropic provider", () => {
       const info = resolveContextWindowInfo({
         cfg: undefined,
         provider: "anthropic",
@@ -160,23 +160,11 @@ describe("context-window-guard", () => {
       expect(info.tokens).toBe(1_000_000);
     });
 
-    it("overrides claude-sonnet-4-6 to 1M even when catalog says 200K", () => {
-      const info = resolveContextWindowInfo({
-        cfg: undefined,
-        provider: "anthropic",
-        modelId: "claude-sonnet-4-6",
-        modelContextWindow: 200_000,
-        defaultTokens: 200_000,
-      });
-      expect(info.source).toBe("knownOverride");
-      expect(info.tokens).toBe(1_000_000);
-    });
-
-    it("handles Bedrock model ID variants (anthropic.claude-opus-4-6-v1)", () => {
+    it("overrides claude-sonnet-4-6 to 1M for amazon-bedrock provider", () => {
       const info = resolveContextWindowInfo({
         cfg: undefined,
         provider: "amazon-bedrock",
-        modelId: "anthropic.claude-opus-4-6-v1",
+        modelId: "anthropic.claude-sonnet-4-6",
         modelContextWindow: 200_000,
         defaultTokens: 200_000,
       });
@@ -184,7 +172,31 @@ describe("context-window-guard", () => {
       expect(info.tokens).toBe(1_000_000);
     });
 
-    it("handles dot-notation variants (claude-opus-4.6)", () => {
+    it("overrides Bedrock regional variants (us.anthropic.claude-opus-4-6-v1)", () => {
+      const info = resolveContextWindowInfo({
+        cfg: undefined,
+        provider: "amazon-bedrock",
+        modelId: "us.anthropic.claude-opus-4-6-v1",
+        modelContextWindow: 200_000,
+        defaultTokens: 200_000,
+      });
+      expect(info.source).toBe("knownOverride");
+      expect(info.tokens).toBe(1_000_000);
+    });
+
+    it("overrides google-antigravity provider", () => {
+      const info = resolveContextWindowInfo({
+        cfg: undefined,
+        provider: "google-antigravity",
+        modelId: "claude-opus-4-6-thinking",
+        modelContextWindow: 200_000,
+        defaultTokens: 200_000,
+      });
+      expect(info.source).toBe("knownOverride");
+      expect(info.tokens).toBe(1_000_000);
+    });
+
+    it("does NOT override for openrouter (proxy may have lower limits)", () => {
       const info = resolveContextWindowInfo({
         cfg: undefined,
         provider: "openrouter",
@@ -192,8 +204,32 @@ describe("context-window-guard", () => {
         modelContextWindow: 200_000,
         defaultTokens: 200_000,
       });
-      expect(info.source).toBe("knownOverride");
-      expect(info.tokens).toBe(1_000_000);
+      expect(info.source).toBe("model");
+      expect(info.tokens).toBe(200_000);
+    });
+
+    it("does NOT override for github-copilot", () => {
+      const info = resolveContextWindowInfo({
+        cfg: undefined,
+        provider: "github-copilot",
+        modelId: "claude-opus-4.6",
+        modelContextWindow: 128_000,
+        defaultTokens: 200_000,
+      });
+      expect(info.source).toBe("model");
+      expect(info.tokens).toBe(128_000);
+    });
+
+    it("does NOT override for unknown/custom providers", () => {
+      const info = resolveContextWindowInfo({
+        cfg: undefined,
+        provider: "my-custom-proxy",
+        modelId: "claude-opus-4-6",
+        modelContextWindow: 200_000,
+        defaultTokens: 200_000,
+      });
+      expect(info.source).toBe("model");
+      expect(info.tokens).toBe(200_000);
     });
 
     it("modelsConfig takes priority over knownOverride", () => {
@@ -229,7 +265,7 @@ describe("context-window-guard", () => {
       expect(info.tokens).toBe(200_000);
     });
 
-    it("does not override unrelated models", () => {
+    it("does not override unrelated models on verified providers", () => {
       const info = resolveContextWindowInfo({
         cfg: undefined,
         provider: "anthropic",
@@ -239,21 +275,6 @@ describe("context-window-guard", () => {
       });
       expect(info.source).toBe("model");
       expect(info.tokens).toBe(200_000);
-    });
-
-    // Accepted tradeoff: a hypothetical future model with "opus-4-6" in a longer
-    // ID (e.g. "claude-opus-4-60") would also match. This is intentional for a
-    // temporary shim that will be removed once pi-ai updates its catalog.
-    it("matches longer model IDs containing the pattern (accepted tradeoff)", () => {
-      const info = resolveContextWindowInfo({
-        cfg: undefined,
-        provider: "anthropic",
-        modelId: "claude-opus-4-60-hypothetical",
-        modelContextWindow: 200_000,
-        defaultTokens: 200_000,
-      });
-      expect(info.source).toBe("knownOverride");
-      expect(info.tokens).toBe(1_000_000);
     });
   });
 });

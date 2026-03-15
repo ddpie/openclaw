@@ -18,21 +18,31 @@ export type ContextWindowSource =
  * The pi-ai catalog still reports 200K for most providers.
  * See: https://claude.com/blog/1m-context-ga
  *
- * Patterns are matched against the modelId (case-insensitive, substring).
+ * Overrides are scoped to verified first-party providers only.
+ * Proxies/aggregators (openrouter, github-copilot, vercel) are excluded
+ * because they may impose their own lower context limits.
+ *
  * User modelsConfig overrides always take priority over these corrections.
+ * This override can be removed once pi-ai ships the catalog update.
  */
-const KNOWN_CONTEXT_WINDOW_OVERRIDES: ReadonlyArray<{ pattern: string; tokens: number }> = [
-  { pattern: "opus-4-6", tokens: 1_000_000 },
-  { pattern: "opus-4.6", tokens: 1_000_000 },
-  { pattern: "sonnet-4-6", tokens: 1_000_000 },
-  { pattern: "sonnet-4.6", tokens: 1_000_000 },
-];
+const KNOWN_1M_PROVIDERS = new Set([
+  "anthropic",
+  "amazon-bedrock",
+  "google-vertex",
+  "google-antigravity",
+  "opencode",
+]);
 
-function resolveKnownContextWindowOverride(modelId: string): number | null {
+const KNOWN_1M_MODEL_PATTERNS = ["opus-4-6", "opus-4.6", "sonnet-4-6", "sonnet-4.6"];
+
+function resolveKnownContextWindowOverride(modelId: string, provider: string): number | null {
+  if (!KNOWN_1M_PROVIDERS.has(provider)) {
+    return null;
+  }
   const lower = modelId.toLowerCase();
-  for (const entry of KNOWN_CONTEXT_WINDOW_OVERRIDES) {
-    if (lower.includes(entry.pattern)) {
-      return entry.tokens;
+  for (const pattern of KNOWN_1M_MODEL_PATTERNS) {
+    if (lower.includes(pattern)) {
+      return 1_000_000;
     }
   }
   return null;
@@ -68,7 +78,7 @@ export function resolveContextWindowInfo(params: {
     return normalizePositiveInt(match?.contextWindow);
   })();
   const fromModel = normalizePositiveInt(params.modelContextWindow);
-  const fromKnownOverride = resolveKnownContextWindowOverride(params.modelId);
+  const fromKnownOverride = resolveKnownContextWindowOverride(params.modelId, params.provider);
   const baseInfo = fromModelsConfig
     ? { tokens: fromModelsConfig, source: "modelsConfig" as const }
     : fromKnownOverride
