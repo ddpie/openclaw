@@ -299,4 +299,31 @@ describe("server-channels auto restart", () => {
 
     expect(manager.isHealthMonitorEnabled("discord", DEFAULT_ACCOUNT_ID)).toBe(false);
   });
+
+  it("does not treat an empty account id as the default account when matching raw overrides", () => {
+    installTestRegistry(
+      createTestPlugin({
+        resolveAccount: () => ({
+          enabled: true,
+          configured: true,
+        }),
+      }),
+    );
+
+    const manager = createManager({
+      loadConfig: () => ({
+        channels: {
+          discord: {
+            accounts: {
+              default: {
+                healthMonitor: { enabled: false },
+              },
+            },
+          },
+        },
+      }),
+    });
+
+    expect(manager.isHealthMonitorEnabled("discord", "")).toBe(true);
+  });
 });

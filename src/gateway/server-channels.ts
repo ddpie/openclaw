@@ -8,7 +8,11 @@ import { resetDirectoryCache } from "../infra/outbound/target-resolver.js";
 import type { createSubsystemLogger } from "../logging/subsystem.js";
 import type { PluginRuntime } from "../plugins/runtime/types.js";
 import { resolveAccountEntry } from "../routing/account-lookup.js";
-import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "../routing/session-key.js";
+import {
+  DEFAULT_ACCOUNT_ID,
+  normalizeAccountId,
+  normalizeOptionalAccountId,
+} from "../routing/session-key.js";
 import type { RuntimeEnv } from "../runtime.js";
 
 const CHANNEL_RESTART_POLICY: BackoffPolicy = {
@@ -143,7 +147,7 @@ export function createChannelManager(opts: ChannelManagerOptions): ChannelManage
       return direct.healthMonitor.enabled;
     }
 
-    const normalizedAccountId = normalizeAccountId(accountId);
+    const normalizedAccountId = normalizeOptionalAccountId(accountId);
     if (!normalizedAccountId) {
       return undefined;
     }
@@ -175,6 +179,8 @@ export function createChannelManager(opts: ChannelManagerOptions): ChannelManage
       return true;
     }
     try {
+      // Probe only: health-monitor config is read directly from raw channel config above.
+      // This call exists solely to fail closed if resolver-side config loading is broken.
       plugin.config.resolveAccount(cfg, accountId);
     } catch (err) {
       channelLogs[channelId].warn?.(
