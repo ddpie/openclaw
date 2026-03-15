@@ -760,7 +760,7 @@ describe("installPluginFromDir", () => {
     expect(npmCall).toBeDefined();
   });
 
-  it("triggers npm install when plugin has only peerDependencies", async () => {
+  it("does not trigger npm install when plugin has only peerDependencies", async () => {
     const { pluginDir, extensionsDir } = setupPluginInstallDirs();
 
     fs.writeFileSync(
@@ -802,7 +802,7 @@ describe("installPluginFromDir", () => {
     const npmCall = run.mock.calls.find(
       (call) => Array.isArray(call[0]) && call[0][0] === "npm" && call[0][1] === "install",
     );
-    expect(npmCall).toBeDefined();
+    expect(npmCall).toBeUndefined();
   });
 });
 

@@ -154,12 +154,11 @@ describe("loadPluginManifestRegistry", () => {
 
     const registry = loadRegistry(candidates);
     expect(countDuplicateWarnings(registry)).toBe(1);
-    // Only one record should remain — the higher-precedence origin wins.
     expect(registry.plugins.length).toBe(1);
-    expect(registry.plugins[0]?.origin).toBe("global");
+    expect(registry.plugins[0]?.origin).toBe("bundled");
   });
 
-  it("prefers globally-installed plugin over bundled copy at a different path (#32879)", () => {
+  it("prefers tracked installed plugin over bundled copy at a different path (#32879)", () => {
     const bundledDir = makeTempDir();
     const globalDir = makeTempDir();
     const manifest = { id: "zalouser", configSchema: { type: "object" } };
@@ -179,7 +178,20 @@ describe("loadPluginManifestRegistry", () => {
       }),
     ];
 
-    const registry = loadRegistry(candidates);
+    const registry = loadPluginManifestRegistry({
+      candidates,
+      cache: false,
+      config: {
+        plugins: {
+          installs: {
+            zalouser: {
+              source: "npm",
+              installPath: globalDir,
+            },
+          },
+        },
+      },
+    });
     // The warning should still be emitted for visibility.
     expect(countDuplicateWarnings(registry)).toBe(1);
     // Only the global (installed) copy should be kept.

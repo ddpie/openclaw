@@ -298,10 +298,18 @@ export function loadPluginManifestRegistry(params: {
             ? `duplicate plugin id detected; ${existing.candidate.origin} plugin will be overridden by ${candidate.origin} plugin (${candidate.source})`
             : `duplicate plugin id detected; ${candidate.origin} plugin will be overridden by ${existing.candidate.origin} plugin (${candidate.source})`,
       });
-      // Apply origin precedence for different-path duplicates too: a user-installed
-      // (global) plugin should be preferred over a bundled copy that may lack
-      // node_modules with required dependencies (see #32879).
-      if (PLUGIN_ORIGIN_RANK[candidate.origin] < PLUGIN_ORIGIN_RANK[existing.candidate.origin]) {
+      // Only tracked install records may outrank bundled copies for different-path
+      // duplicates. Untracked duplicates must keep the existing bundled-first trust
+      // and enable semantics.
+      if (
+        PLUGIN_ORIGIN_RANK[candidate.origin] < PLUGIN_ORIGIN_RANK[existing.candidate.origin] &&
+        candidateMatchesTrackedInstall({
+          pluginId: manifest.id,
+          candidate,
+          config,
+          env,
+        })
+      ) {
         records[existing.recordIndex] = buildRecord({
           manifest,
           candidate,

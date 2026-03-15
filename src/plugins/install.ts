@@ -340,8 +340,7 @@ async function installPluginFromPackageDir(
   }
 
   const deps = manifest.dependencies ?? {};
-  const peerDeps = manifest.peerDependencies ?? {};
-  const hasDeps = Object.keys(deps).length > 0 || Object.keys(peerDeps).length > 0;
+  const hasDeps = Object.keys(deps).length > 0;
   const installRes = await installPackageDir({
     sourceDir: params.packageDir,
     targetDir,

@@ -1501,7 +1501,7 @@ describe("loadOpenClawPlugins", () => {
     expect(loaded?.origin).toBe("config");
   });
 
-  it("prefers globally-installed plugin over bundled copy (#32879)", () => {
+  it("prefers tracked globally-installed plugin over bundled copy (#32879)", () => {
     const bundledDir = makeTempDir();
     writePlugin({
       id: "feishu",
@@ -1527,6 +1527,12 @@ describe("loadOpenClawPlugins", () => {
         config: {
           plugins: {
             allow: ["feishu"],
+            installs: {
+              feishu: {
+                source: "npm",
+                installPath: globalDir,
+              },
+            },
             entries: {
               feishu: { enabled: true },
             },
