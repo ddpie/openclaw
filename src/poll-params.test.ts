@@ -23,14 +23,20 @@ describe("poll params", () => {
     },
   );
 
-  it("treats finite numeric poll params as poll creation intent", () => {
-    expect(hasPollCreationParams({ pollDurationHours: 0 })).toBe(true);
+  it("treats positive finite numeric poll params as poll creation intent", () => {
     expect(hasPollCreationParams({ pollDurationSeconds: 60 })).toBe(true);
     expect(hasPollCreationParams({ pollDurationSeconds: "60" })).toBe(true);
     expect(hasPollCreationParams({ pollDurationSeconds: "1e3" })).toBe(true);
     expect(hasPollCreationParams({ pollDurationHours: Number.NaN })).toBe(false);
     expect(hasPollCreationParams({ pollDurationSeconds: Infinity })).toBe(false);
     expect(hasPollCreationParams({ pollDurationSeconds: "60abc" })).toBe(false);
+  });
+
+  it("does not treat zero duration as poll creation intent (#48730)", () => {
+    expect(hasPollCreationParams({ pollDurationHours: 0 })).toBe(false);
+    expect(hasPollCreationParams({ pollDurationSeconds: 0 })).toBe(false);
+    expect(hasPollCreationParams({ pollDurationHours: "0" })).toBe(false);
+    expect(hasPollCreationParams({ pollDurationSeconds: "0" })).toBe(false);
   });
 
   it("treats string-encoded boolean poll params as poll creation intent when true", () => {
