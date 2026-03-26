@@ -6,8 +6,12 @@ export const MINIMAX_DEFAULT_MODEL_REF = `minimax/${MINIMAX_DEFAULT_MODEL_ID}`;
 export const MINIMAX_TEXT_MODEL_ORDER = ["MiniMax-M2.7", "MiniMax-M2.7-highspeed"] as const;
 
 export const MINIMAX_TEXT_MODEL_CATALOG = {
-  "MiniMax-M2.7": { name: "MiniMax M2.7", reasoning: true },
-  "MiniMax-M2.7-highspeed": { name: "MiniMax M2.7 Highspeed", reasoning: true },
+  "MiniMax-M2.7": { name: "MiniMax M2.7", reasoning: true, input: ["text", "image"] },
+  "MiniMax-M2.7-highspeed": {
+    name: "MiniMax M2.7 Highspeed",
+    reasoning: true,
+    input: ["text", "image"],
+  },
 } as const;
 
 export const MINIMAX_TEXT_MODEL_REFS = MINIMAX_TEXT_MODEL_ORDER.map(

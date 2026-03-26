@@ -140,7 +140,7 @@ function buildMinimaxModelDefinition(params: {
     id: params.id,
     name: params.name ?? catalog?.name ?? `MiniMax ${params.id}`,
     reasoning: params.reasoning ?? catalog?.reasoning ?? false,
-    input: ["text"],
+    input: [...(catalog?.input ?? ["text"])] as ("text" | "image")[],
     cost: params.cost,
     contextWindow: params.contextWindow,
     maxTokens: params.maxTokens,
